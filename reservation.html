@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Food Express | Reservation{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <span class="muted">Reserve your table</span>
+    <h1>Book a table</h1>
+    <p>Share your visit details and we’ll prepare your table ahead of time.</p>
+</section>
+
+<section class="panel section-block form-card">
+    <form method="post" action="/reservation">
+        <label class="sr-only">Name</label>
+        <input type="text" name="name" placeholder="Full name" required>
+
+        <label class="sr-only">Date</label>
+        <input type="date" name="date" required>
+
+        <label class="sr-only">Time</label>
+        <input type="time" name="time" required>
+
+        <label class="sr-only">Guests</label>
+        <input type="number" name="guests" placeholder="Guests" min="1" value="2" required>
+
+        <label class="sr-only">Phone</label>
+        <input type="tel" name="phone" placeholder="Phone (optional)">
+
+        <label class="sr-only">Email</label>
+        <input type="email" name="email" placeholder="Email (optional)">
+
+        <input type="hidden" name="booking_fee" value="150.00">
+        <label class="sr-only">Payment method</label>
+        <select name="payment_method">
+            <option value="Online">Online Payment</option>
+            <option value="On Arrival">Pay on arrival</option>
+        </select>
+
+        <button class="btn btn-primary" type="submit">Reserve Table (₹150)</button>
+    </form>
+</section>
+{% endblock %}

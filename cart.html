@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+
+{% block title %}Food Express | Cart{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <span class="muted">Review your order</span>
+    <h1>Your Cart</h1>
+    <p class="muted">Your selected items appear below. Adjust your order before checkout.</p>
+</section>
+
+<section class="panel section-block">
+    <div class="cart-container" id="cartItems"></div>
+    <div class="menu-toolbar" style="margin-top: 1rem; align-items:center;">
+        <h2 class="page-title" style="margin: 0; font-size: 1.5rem;">Total: ₹<span id="total">0</span></h2>
+        <a class="btn btn-primary" href="/checkout" role="button" aria-label="Proceed to checkout">Checkout</a>
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Food Express | Login{% endblock %}
+
+{% block content %}
+<section class="auth-card">
+    <h1 class="page-title">Login</h1>
+    <p>Welcome back. Sign in to manage your orders and reservations.</p>
+    <form>
+        <input type="email" id="loginEmail" placeholder="Email">
+        <input type="password" id="loginPassword" placeholder="Password">
+        <button type="button" onclick="login()">Login</button>
+    </form>
+    <p class="footer-note">New here? <a href="/register">Create an account</a>.</p>
+    <p class="footer-note"><a href="/dashboard">Go to dashboard</a></p>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/auth.js') }}"></script>
+{% endblock %}

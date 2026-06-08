@@ -1,0 +1,925 @@
+{% extends "base.html" %}
+
+{% block title %}Food Express | Track Order{% endblock %}
+
+{% block content %}
+<section class="hero tracking-hero">
+    <span class="muted">Live tracking</span>
+    <h1>Track Order #{{ order_id }}</h1>
+    <p>Your order updates automatically with live rider progress, ETA, and delivery status.</p>
+</section>
+
+<section class="panel section-block tracking-pro">
+    <div class="tracking-overview-card">
+        <div class="tracking-overview-grid">
+            <div class="tracking-status-pane">
+                <span class="tracking-kitchen muted">{{ tracking_payload.restaurant_name }}</span>
+                <h2 id="trackingStatus">{{ tracking_payload.status }}</h2>
+                <p class="muted tracking-detail" id="trackingDetail">{{ tracking_payload.detail }}</p>
+
+                <div class="tracking-metrics">
+                    <div class="tracking-metric">
+                        <p class="muted">ETA</p>
+                        <h3 id="trackingEta">{{ tracking_payload.eta_minutes }} min</h3>
+                    </div>
+                    <div class="tracking-metric">
+                        <p class="muted">Remaining</p>
+                        <h3 id="trackingRemainingTimer">--:--</h3>
+                    </div>
+                    <div class="tracking-metric">
+                        <p class="muted">AI ETA</p>
+                        <h3 id="trackingAiEta">{{ tracking_payload.ai_eta_minutes }} min</h3>
+                        <small class="muted" id="trackingAiConfidence">Confidence {{ (tracking_payload.ai_confidence * 100) | round(0) }}%</small>
+                    </div>
+                    <div class="tracking-metric">
+                        <p class="muted">Updated</p>
+                        <h3 id="trackingUpdatedAt">{{ tracking_payload.updated_at }}</h3>
+                    </div>
+                </div>
+
+                <p class="muted tracking-insight" id="trackingAiInsight">{{ tracking_payload.ai_prediction.insight }}</p>
+
+                <div class="tracking-main-progress">
+                    <div id="trackingBar" style="width: {{ tracking_payload.progress }}%;"></div>
+                </div>
+            </div>
+
+            <aside class="tracking-driver-pane">
+                <div class="tracking-driver-head">
+                    <div class="tracking-driver-avatar" id="driverAvatar">{{ tracking_payload.driver.avatar }}</div>
+                    <div>
+                        <p class="muted">Delivery partner</p>
+                        <h3 id="driverName">{{ tracking_payload.driver.name }}</h3>
+                        <p class="muted" id="driverVehicle">{{ tracking_payload.driver.vehicle }}</p>
+                    </div>
+                </div>
+
+                <div class="tracking-driver-meta">
+                    <p class="muted">Rider progress</p>
+                    <div class="tracking-rider-progress">
+                        <div id="riderBar" style="width: {{ tracking_payload.rider_progress }}%;"></div>
+                    </div>
+                    <p class="muted"><strong>From:</strong> <span id="restaurantAddress">{{ tracking_payload.restaurant_address }}</span></p>
+                    <p class="muted"><strong>To:</strong> <span id="driverAddress">{{ tracking_payload.delivery_address or 'Delivery address will appear here.' }}</span></p>
+                </div>
+            </aside>
+        </div>
+    </div>
+
+    <div class="tracking-map-card">
+        <div class="tracking-map-title-row">
+            <h2>Live route</h2>
+            <span class="tracking-live-pill">LIVE</span>
+        </div>
+        <p class="muted">Real route from restaurant to customer destination.</p>
+        <div class="tracking-map-shell" id="trackingMapShell">
+            {% if GOOGLE_MAPS_API_KEY %}
+            <div id="trackingMapCanvas" class="tracking-map-canvas" aria-label="Live tracking map"></div>
+            <div class="tracking-map-overlay">
+                <div class="tracking-map-chip">Route: restaurant to customer</div>
+                <div class="tracking-map-chip muted" id="trackingMapEtaChip">ETA {{ tracking_payload.eta_minutes }} min</div>
+            </div>
+            {% else %}
+            <iframe
+                id="trackingMap"
+                title="Live order route map"
+                src="{{ tracking_payload.map_url }}"
+                loading="lazy"
+                referrerpolicy="no-referrer-when-downgrade"></iframe>
+            <div class="tracking-route-line"></div>
+            <div class="tracking-route-dots">
+                <span class="tracking-route-dot tracking-route-dot--origin"></span>
+                <span class="tracking-route-dot tracking-route-dot--mid"></span>
+                <span class="tracking-route-dot tracking-route-dot--mid"></span>
+                <span class="tracking-route-dot tracking-route-dot--destination"></span>
+            </div>
+            <div class="tracking-destination-pin">
+                <span class="tracking-destination-pin__core"></span>
+                <span class="tracking-destination-pulse"></span>
+                <span class="tracking-destination-pin__label">Destination</span>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="tracking-journey-card">
+        <h2>Order journey</h2>
+        <div class="tracking-stage-list">
+            {% for stage in tracking_payload.stages %}
+            <div id="stage-{{ loop.index0 }}" class="tracking-stage-card {% if loop.index0 == tracking_payload.current_stage_index %}is-active{% elif loop.index0 < tracking_payload.current_stage_index %}is-complete{% endif %}">
+                <div class="tracking-stage-dot"></div>
+                <div>
+                    <h3>{{ stage.label }}</h3>
+                    <p class="muted">{{ stage.detail }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="tracking-order-card">
+        <h2>Order summary</h2>
+        <p><strong>Name:</strong> {{ checkout_details.get('full_name', 'Guest') }}</p>
+        <p><strong>Address:</strong> {{ checkout_details.get('address', 'Not provided') }}</p>
+        <p><strong>Total:</strong> ₹{{ order_total }}</p>
+        <p><strong>Items:</strong> {{ cart_items | length }}</p>
+    </div>
+
+    {% if payment_qr %}
+    <div class="tracking-payment-card">
+        <h2>Complete payment</h2>
+        <p class="muted">Scan this QR to pay (UPI).</p>
+        <img alt="Payment QR" src="data:image/png;base64,{{ payment_qr }}" class="tracking-payment-qr">
+        <p class="muted">Reference: {{ payment_reference }}</p>
+        <div class="tracking-payment-action">
+            <button id="trackingPaymentBtn" class="btn btn-primary">I have paid</button>
+            <span id="trackingPaymentOk">Paid</span>
+        </div>
+    </div>
+    {% endif %}
+</section>
+
+<div class="tracking-toast" id="trackingToast" aria-live="polite" aria-atomic="true"></div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        const statusElement = document.getElementById('trackingStatus')
+        const detailElement = document.getElementById('trackingDetail')
+        const barElement = document.getElementById('trackingBar')
+        const etaElement = document.getElementById('trackingEta')
+        const aiEtaElement = document.getElementById('trackingAiEta')
+        const remainingTimerElement = document.getElementById('trackingRemainingTimer')
+        const aiConfidenceElement = document.getElementById('trackingAiConfidence')
+        const aiInsightElement = document.getElementById('trackingAiInsight')
+        const updatedAtElement = document.getElementById('trackingUpdatedAt')
+        const driverAvatar = document.getElementById('driverAvatar')
+        const driverName = document.getElementById('driverName')
+        const driverVehicle = document.getElementById('driverVehicle')
+        const restaurantAddress = document.getElementById('restaurantAddress')
+        const driverAddress = document.getElementById('driverAddress')
+        const riderBar = document.getElementById('riderBar')
+        const trackingMapCanvas = document.getElementById('trackingMapCanvas')
+        const trackingMapEtaChip = document.getElementById('trackingMapEtaChip')
+        const trackingMap = document.getElementById('trackingMap')
+        const trackingPin = document.getElementById('trackingPin')
+        const trackingToast = document.getElementById('trackingToast')
+        const stageCards = Array.from(document.querySelectorAll('[id^="stage-"]'))
+        let lastStageKey = '{{ tracking_payload.stages[tracking_payload.current_stage_index].key }}'
+        let remainingSeconds = null
+        let countdownTimer = null
+        let pinAnimationFrame = null
+        const hasGoogleMapsCanvas = Boolean(trackingMapCanvas)
+        let mapInstance = null
+        let riderMarker = null
+        let routePolyline = null
+        let routeStepMarkers = []
+        let riderBikeOverlay = null
+        let destinationMarker = null
+        let destinationPulseCircle = null
+        let destinationPulseTimer = null
+        let routePoints = []
+        let routeProgress = 0
+        let routeReady = false
+        let originLocation = null
+        let destinationLocation = null
+        let routeTimer = null
+        let geocoder = null
+        let directionsService = null
+        let routeAnimationFrame = null
+        let pendingRouteProgress = 0
+
+        function parseLatLng(latlng) {
+            if (!latlng) return null
+            const lat = typeof latlng.lat === 'function' ? latlng.lat() : latlng.lat
+            const lng = typeof latlng.lng === 'function' ? latlng.lng() : latlng.lng
+            if (!Number.isFinite(Number(lat)) || !Number.isFinite(Number(lng))) return null
+            return { lat: Number(lat), lng: Number(lng) }
+        }
+
+        function interpolatePoint(start, end, ratio) {
+            return {
+                lat: start.lat + (end.lat - start.lat) * ratio,
+                lng: start.lng + (end.lng - start.lng) * ratio,
+            }
+        }
+
+        function bearingBetween(start, end) {
+            const toRad = value => value * Math.PI / 180
+            const toDeg = value => value * 180 / Math.PI
+            const startLat = toRad(start.lat)
+            const endLat = toRad(end.lat)
+            const deltaLng = toRad(end.lng - start.lng)
+            const y = Math.sin(deltaLng) * Math.cos(endLat)
+            const x = Math.cos(startLat) * Math.sin(endLat) - Math.sin(startLat) * Math.cos(endLat) * Math.cos(deltaLng)
+            return (toDeg(Math.atan2(y, x)) + 360) % 360
+        }
+
+        function bikeSvgDataUrl() {
+            return '/static/img/bike.svg'
+        }
+
+        function haversineMeters(a, b) {
+            const radius = 6371000
+            const toRad = value => value * Math.PI / 180
+            const lat1 = toRad(a.lat)
+            const lat2 = toRad(b.lat)
+            const deltaLat = toRad(b.lat - a.lat)
+            const deltaLng = toRad(b.lng - a.lng)
+            const sinLat = Math.sin(deltaLat / 2)
+            const sinLng = Math.sin(deltaLng / 2)
+            const h = sinLat * sinLat + Math.cos(lat1) * Math.cos(lat2) * sinLng * sinLng
+            return 2 * radius * Math.asin(Math.min(1, Math.sqrt(h)))
+        }
+
+        function buildRoutePoints(path) {
+            if (!Array.isArray(path) || path.length < 2) return []
+            const points = [path[0]]
+            for (let i = 0; i < path.length - 1; i += 1) {
+                const start = path[i]
+                const end = path[i + 1]
+                for (let step = 1; step <= 24; step += 1) {
+                    points.push(interpolatePoint(start, end, step / 24))
+                }
+            }
+            return points
+        }
+
+        function clearRouteDecorations() {
+            routeStepMarkers.forEach(marker => marker.setMap && marker.setMap(null))
+            routeStepMarkers = []
+
+            if (routePolyline) {
+                routePolyline.setMap(null)
+                routePolyline = null
+            }
+
+            if (destinationMarker) {
+                destinationMarker.setMap(null)
+                destinationMarker = null
+            }
+
+            if (destinationPulseCircle) {
+                destinationPulseCircle.setMap(null)
+                destinationPulseCircle = null
+            }
+
+            if (riderBikeOverlay && riderBikeOverlay.setMap) {
+                riderBikeOverlay.setMap(null)
+                riderBikeOverlay = null
+            }
+
+            if (destinationPulseTimer) {
+                window.clearInterval(destinationPulseTimer)
+                destinationPulseTimer = null
+            }
+        }
+
+        function createBikeOverlay(map, initialPosition) {
+            const overlay = new google.maps.OverlayView()
+            overlay.position = initialPosition
+            overlay.rotation = 0
+            overlay.div = null
+
+            overlay.onAdd = function () {
+                const div = document.createElement('div')
+                div.className = 'tracking-bike-overlay'
+                div.innerHTML = `
+                    <div class="tracking-bike-shadow"></div>
+                    <div class="tracking-bike-body">
+                        <img class="tracking-bike-svg" alt="Bike rider" src="${bikeSvgDataUrl()}">
+                    </div>
+                `
+                overlay.div = div
+                this.getPanes().overlayMouseTarget.appendChild(div)
+            }
+
+            overlay.draw = function () {
+                if (!overlay.div || !overlay.position) return
+                const projection = this.getProjection()
+                if (!projection) return
+                const pixel = projection.fromLatLngToDivPixel(overlay.position)
+                if (!pixel) return
+                overlay.div.style.left = `${pixel.x}px`
+                overlay.div.style.top = `${pixel.y}px`
+                overlay.div.style.transform = `translate(-50%, -50%) rotate(${overlay.rotation}deg)`
+            }
+
+            overlay.onRemove = function () {
+                if (overlay.div && overlay.div.parentNode) {
+                    overlay.div.parentNode.removeChild(overlay.div)
+                }
+                overlay.div = null
+            }
+
+            overlay.setPosition = function (position) {
+                overlay.position = position
+                overlay.draw()
+            }
+
+            overlay.setRotation = function (rotation) {
+                overlay.rotation = rotation
+                overlay.draw()
+            }
+
+            overlay.setMap(map)
+            return overlay
+        }
+
+        function createRouteStepMarkers(points) {
+            if (!mapInstance || !Array.isArray(points) || points.length < 6) return
+
+            const step = Math.max(10, Math.floor(points.length / 9))
+            for (let i = step; i < points.length - 1; i += step) {
+                const marker = new google.maps.Marker({
+                    position: points[i],
+                    map: mapInstance,
+                    clickable: false,
+                    zIndex: 3,
+                    icon: {
+                        path: google.maps.SymbolPath.CIRCLE,
+                        scale: i % (step * 2) === 0 ? 4.8 : 3.8,
+                        fillColor: i % (step * 2) === 0 ? '#ffb14a' : '#ffffff',
+                        fillOpacity: 1,
+                        strokeColor: '#d46a2f',
+                        strokeOpacity: 0.9,
+                        strokeWeight: 1.8,
+                    },
+                })
+                routeStepMarkers.push(marker)
+            }
+        }
+
+        function startDestinationPulse() {
+            if (!destinationPulseCircle) return
+            if (destinationPulseTimer) window.clearInterval(destinationPulseTimer)
+
+            let grow = true
+            let radius = 22
+            destinationPulseTimer = window.setInterval(() => {
+                if (!destinationPulseCircle) return
+                radius += grow ? 3.5 : -3.5
+                if (radius >= 56) grow = false
+                if (radius <= 20) grow = true
+                destinationPulseCircle.setRadius(radius)
+                destinationPulseCircle.setOptions({
+                    fillOpacity: 0.16 + (radius - 20) / 220,
+                    strokeOpacity: 0.22 + (radius - 20) / 220,
+                })
+            }, 70)
+        }
+
+        function animateBikeTo(targetProgress) {
+            const target = Math.max(0, Math.min(1, Number(targetProgress) || 0))
+            if (!routePoints.length) {
+                pendingRouteProgress = target
+                return
+            }
+
+            const start = Math.max(0, Math.min(1, Number(routeProgress) || 0))
+            pendingRouteProgress = target
+
+            // small no-op if already extremely close
+            if (Math.abs(target - start) < 0.0005) return
+
+            if (routeAnimationFrame) {
+                window.cancelAnimationFrame(routeAnimationFrame)
+            }
+
+            const maxIndex = routePoints.length - 1
+
+            const startIndexF = start * maxIndex
+            const targetIndexF = target * maxIndex
+
+            // compute approximate distance along the route between two fractional indices
+            function distanceBetweenIndices(aF, bF) {
+                const a = Math.min(maxIndex, Math.max(0, aF))
+                const b = Math.min(maxIndex, Math.max(0, bF))
+                if (Math.abs(b - a) < 1e-6) return 0
+                const i0 = Math.floor(Math.min(a, b))
+                const i1 = Math.floor(Math.max(a, b))
+                let dist = 0
+                // partial first segment
+                const startSegRatio = a - Math.floor(a)
+                if (i0 < routePoints.length - 1) {
+                    const p0 = interpolatePoint(routePoints[i0], routePoints[i0 + 1], startSegRatio)
+                    dist += haversineMeters(p0, routePoints[i0 + 1])
+                }
+                // full segments
+                for (let i = i0 + 1; i < i1; i += 1) {
+                    dist += haversineMeters(routePoints[i], routePoints[i + 1])
+                }
+                // partial last segment
+                const endSegRatio = b - Math.floor(b)
+                if (i1 < routePoints.length - 1) {
+                    const p1 = interpolatePoint(routePoints[i1], routePoints[i1 + 1], endSegRatio)
+                    dist += haversineMeters(routePoints[i1], p1)
+                }
+                return Math.max(0, dist)
+            }
+
+            const distanceMeters = distanceBetweenIndices(startIndexF, targetIndexF)
+
+            // realistic speed (m/s) for a delivery bike; add slight randomness for realism
+            const baseSpeed = 6.5
+            const speedVariance = (Math.random() - 0.5) * 1.8
+            const speed = Math.max(2.5, Math.min(14, baseSpeed + speedVariance))
+
+            // duration derived from distance / speed, clamp to reasonable bounds
+            let durationMs = Math.max(600, (distanceMeters / speed) * 1000)
+            durationMs = Math.min(durationMs, 20000)
+
+            const startAt = performance.now()
+
+            // rotation smoothing helper (shortest angle interpolation)
+            function lerpAngle(a, b, t) {
+                const diff = ((((b - a) % 360) + 540) % 360) - 180
+                return (a + diff * t + 360) % 360
+            }
+
+            let prevRotation = (riderBikeOverlay && typeof riderBikeOverlay.rotation === 'number') ? riderBikeOverlay.rotation : 0
+
+            function updateAt(progress) {
+                const floatIndex = progress * maxIndex
+                const index = Math.min(maxIndex - 1, Math.max(0, Math.floor(floatIndex)))
+                const segmentRatio = floatIndex - index
+                const currentPoint = routePoints[index]
+                const nextPoint = routePoints[Math.min(index + 1, maxIndex)]
+                const position = interpolatePoint(currentPoint, nextPoint, segmentRatio)
+                const targetRotation = bearingBetween(currentPoint, nextPoint)
+
+                // ease rotation slightly toward target for smoothness
+                const easedRot = lerpAngle(prevRotation, targetRotation, 0.28)
+                prevRotation = easedRot
+
+                routeProgress = progress
+                if (riderBikeOverlay && riderBikeOverlay.setPosition) {
+                    riderBikeOverlay.setPosition(position)
+                    riderBikeOverlay.setRotation(easedRot)
+                }
+
+                // gentle map pan to keep rider visible
+                if (mapInstance && mapInstance.panTo) {
+                    try { mapInstance.panTo(position) } catch (e) { /* ignore */ }
+                }
+            }
+
+            function tick(now) {
+                const elapsed = now - startAt
+                const t = Math.min(1, elapsed / durationMs)
+                const eased = 1 - Math.pow(1 - t, 3)
+                const progress = start + (target - start) * eased
+                updateAt(progress)
+                if (t < 1) {
+                    routeAnimationFrame = window.requestAnimationFrame(tick)
+                } else {
+                    routeAnimationFrame = null
+                }
+            }
+
+            // kickoff
+            updateAt(start)
+            routeAnimationFrame = window.requestAnimationFrame(tick)
+        }
+
+        function setRouteMarkerPosition(ratio) {
+            if (!mapInstance || !riderMarker || routePoints.length < 2) return
+            const clamped = Math.max(0, Math.min(1, ratio))
+            const index = Math.min(routePoints.length - 1, Math.round(clamped * (routePoints.length - 1)))
+            riderMarker.setPosition(routePoints[index])
+            if (mapInstance && routePoints[index]) {
+                mapInstance.panTo(routePoints[index])
+            }
+        }
+
+        function startRoutePlayback() {
+            if (!mapInstance || routeTimer) return
+
+            routeTimer = window.setInterval(() => {
+                if (!routeReady || !routePoints.length) return
+                const etaMinutes = Math.max(0, Number(remainingSeconds || 0) / 60)
+                const totalMinutes = Math.max(etaMinutes, Number('{{ tracking_payload.ai_eta_minutes }}') || etaMinutes || 1)
+                const completedMinutes = Math.max(0, totalMinutes - etaMinutes)
+                const ratio = totalMinutes > 0 ? completedMinutes / totalMinutes : 1
+                routeProgress = Math.max(routeProgress, ratio)
+                setRouteMarkerPosition(routeProgress)
+                if (trackingMapEtaChip) {
+                    trackingMapEtaChip.textContent = remainingSeconds > 0 ? `ETA ${formatRemaining(remainingSeconds)}` : 'Arriving now'
+                }
+            }, 1000)
+        }
+
+        function updateRouteByAiProgress() {
+            if (!routeReady || !routePoints.length) return
+            const aiRemainingMinutes = Number(remainingSeconds || 0) / 60
+            const totalMinutes = Math.max(Number('{{ tracking_payload.ai_eta_minutes }}') || 0, Number('{{ tracking_payload.eta_minutes }}') || 0, 1)
+            const progress = Math.max(0, Math.min(1, 1 - (aiRemainingMinutes / totalMinutes)))
+            routeProgress = progress
+            setRouteMarkerPosition(progress)
+        }
+
+        function initRealTrackingMap() {
+            if (!hasGoogleMapsCanvas || !window.google || !window.google.maps) return
+            geocoder = new google.maps.Geocoder()
+            directionsService = new google.maps.DirectionsService()
+
+            mapInstance = new google.maps.Map(trackingMapCanvas, {
+                center: { lat: 19.875, lng: 75.343 },
+                zoom: 13,
+                mapTypeControl: false,
+                streetViewControl: false,
+                fullscreenControl: false,
+                clickableIcons: false,
+                gestureHandling: 'greedy',
+            })
+
+            riderMarker = new google.maps.Marker({
+                map: mapInstance,
+                title: 'Bike rider',
+                icon: {
+                    path: google.maps.SymbolPath.FORWARD_CLOSED_ARROW,
+                    scale: 6,
+                    strokeColor: '#d46a2f',
+                    fillColor: '#d46a2f',
+                    fillOpacity: 1,
+                    strokeWeight: 2,
+                    rotation: 90,
+                },
+            })
+
+            const originAddress = '{{ tracking_payload.restaurant_address|replace("\\", "\\\\")|replace("'", "\\'") }}'
+            const destinationAddress = '{{ tracking_payload.delivery_address|default("", true)|replace("\\", "\\\\")|replace("'", "\\'") }}'
+
+            const geocodeAddress = (address) => new Promise((resolve) => {
+                geocoder.geocode({ address }, (results, status) => {
+                    if (status === 'OK' && results && results[0]) {
+                        resolve(parseLatLng(results[0].geometry.location))
+                    } else {
+                        resolve(null)
+                    }
+                })
+            })
+
+            Promise.all([
+                geocodeAddress(originAddress),
+                geocodeAddress(destinationAddress),
+            ]).then(([origin, destination]) => {
+                originLocation = origin
+                destinationLocation = destination
+
+                if (!originLocation && !destinationLocation) return
+
+                clearRouteDecorations()
+
+                if (!destinationLocation && originLocation) {
+                    mapInstance.setCenter(originLocation)
+                    riderBikeOverlay = createBikeOverlay(mapInstance, originLocation)
+                    riderBikeOverlay.setPosition(originLocation)
+                    routeReady = true
+                    routePoints = [originLocation]
+                    return
+                }
+
+                const travelMode = google.maps.TravelMode.DRIVING
+                directionsService.route(
+                    {
+                        origin: originLocation || originAddress,
+                        destination: destinationLocation || destinationAddress,
+                        travelMode,
+                        provideRouteAlternatives: false,
+                    },
+                    (result, status) => {
+                        if (status === 'OK' && result && result.routes && result.routes[0]) {
+                            const routePath = result.routes[0].overview_path || []
+                            routePoints = buildRoutePoints(routePath.map(parseLatLng).filter(Boolean))
+                            routePolyline = new google.maps.Polyline({
+                                path: routePath,
+                                geodesic: true,
+                                strokeColor: '#d46a2f',
+                                strokeOpacity: 0.92,
+                                strokeWeight: 5,
+                                map: mapInstance,
+                            })
+                            createRouteStepMarkers(routePoints)
+                            mapInstance.fitBounds(result.routes[0].bounds)
+                            routeReady = routePoints.length > 1
+                            if (routeReady && originLocation) {
+                                riderBikeOverlay = createBikeOverlay(mapInstance, routePoints[0] || originLocation)
+                                riderBikeOverlay.setPosition(routePoints[0] || originLocation)
+                                riderBikeOverlay.setRotation(bearingBetween(routePoints[0] || originLocation, routePoints[1] || destinationLocation || originLocation))
+                            }
+                            if (destinationLocation) {
+                                destinationMarker = new google.maps.Marker({
+                                    position: destinationLocation,
+                                    map: mapInstance,
+                                    clickable: false,
+                                    zIndex: 2,
+                                    icon: {
+                                        path: 'M 0,-26 C 10,-26 18,-18 18,-8 C 18,6 0,26 0,26 C 0,26 -18,6 -18,-8 C -18,-18 -10,-26 0,-26 Z',
+                                        fillColor: '#ff6b5f',
+                                        fillOpacity: 1,
+                                        strokeColor: '#ffffff',
+                                        strokeOpacity: 1,
+                                        strokeWeight: 2.2,
+                                        scale: 0.82,
+                                        anchor: new google.maps.Point(0, 0),
+                                    },
+                                })
+                                destinationPulseCircle = new google.maps.Circle({
+                                    map: mapInstance,
+                                    center: destinationLocation,
+                                    radius: 22,
+                                    fillColor: '#ff6b5f',
+                                    fillOpacity: 0.18,
+                                    strokeColor: '#ff6b5f',
+                                    strokeOpacity: 0.24,
+                                    strokeWeight: 2,
+                                    zIndex: 1,
+                                })
+                                startDestinationPulse()
+                            }
+                            routeProgress = 0
+                            animateBikeTo(Math.max(pendingRouteProgress, Number('{{ tracking_payload.rider_progress }}') / 100), 3500)
+                            return
+                        }
+
+                        const fallbackPath = [originLocation, destinationLocation].filter(Boolean)
+                        routePoints = buildRoutePoints(fallbackPath)
+                        if (fallbackPath.length > 1) {
+                            routePolyline = new google.maps.Polyline({
+                                path: fallbackPath,
+                                geodesic: true,
+                                strokeColor: '#d46a2f',
+                                strokeOpacity: 0.92,
+                                strokeWeight: 5,
+                                map: mapInstance,
+                            })
+                            const bounds = new google.maps.LatLngBounds()
+                            fallbackPath.forEach(point => bounds.extend(point))
+                            mapInstance.fitBounds(bounds)
+                        }
+                        createRouteStepMarkers(routePoints)
+                        if (destinationLocation) {
+                            destinationMarker = new google.maps.Marker({
+                                position: destinationLocation,
+                                map: mapInstance,
+                                clickable: false,
+                                zIndex: 2,
+                                icon: {
+                                    path: 'M 0,-26 C 10,-26 18,-18 18,-8 C 18,6 0,26 0,26 C 0,26 -18,6 -18,-8 C -18,-18 -10,-26 0,-26 Z',
+                                    fillColor: '#ff6b5f',
+                                    fillOpacity: 1,
+                                    strokeColor: '#ffffff',
+                                    strokeOpacity: 1,
+                                    strokeWeight: 2.2,
+                                    scale: 0.82,
+                                    anchor: new google.maps.Point(0, 0),
+                                },
+                            })
+                            destinationPulseCircle = new google.maps.Circle({
+                                map: mapInstance,
+                                center: destinationLocation,
+                                radius: 22,
+                                fillColor: '#ff6b5f',
+                                fillOpacity: 0.18,
+                                strokeColor: '#ff6b5f',
+                                strokeOpacity: 0.24,
+                                strokeWeight: 2,
+                                zIndex: 1,
+                            })
+                            startDestinationPulse()
+                        }
+                        routeReady = routePoints.length > 1
+                        riderBikeOverlay = createBikeOverlay(mapInstance, routePoints[0] || originLocation)
+                        if (routePoints[0] && routePoints[1]) {
+                            riderBikeOverlay.setRotation(bearingBetween(routePoints[0], routePoints[1]))
+                        }
+                        routeProgress = 0
+                        animateBikeTo(Math.max(pendingRouteProgress, Number('{{ tracking_payload.rider_progress }}') / 100), 3500)
+                    }
+                )
+            })
+        }
+
+        function formatRemaining(totalSeconds) {
+            const safe = Math.max(0, Number(totalSeconds) || 0)
+            const minutes = Math.floor(safe / 60)
+            const seconds = safe % 60
+            return `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`
+        }
+
+        function renderRemaining() {
+            if (!remainingTimerElement) return
+            if (remainingSeconds == null) {
+                remainingTimerElement.textContent = '--:--'
+                return
+            }
+            if (remainingSeconds <= 0) {
+                remainingTimerElement.textContent = 'Arriving'
+                return
+            }
+            remainingTimerElement.textContent = formatRemaining(remainingSeconds)
+        }
+
+        function startCountdown() {
+            if (countdownTimer) return
+            countdownTimer = window.setInterval(() => {
+                if (remainingSeconds == null) return
+                remainingSeconds = Math.max(0, remainingSeconds - 1)
+                renderRemaining()
+                updateRouteByAiProgress()
+            }, 1000)
+        }
+
+        function parsePercent(value, fallback) {
+            const parsed = Number.parseFloat(String(value || '').replace('%', ''))
+            return Number.isFinite(parsed) ? parsed : fallback
+        }
+
+        function animatePinTo(targetTop, targetLeft, durationMs = 4500) {
+            if (!trackingPin) return
+
+            if (pinAnimationFrame) {
+                window.cancelAnimationFrame(pinAnimationFrame)
+            }
+
+            const startTop = parsePercent(trackingPin.style.top, targetTop)
+            const startLeft = parsePercent(trackingPin.style.left, targetLeft)
+            const startAt = performance.now()
+
+            function tick(now) {
+                const elapsed = now - startAt
+                const t = Math.min(1, elapsed / durationMs)
+                const eased = 1 - Math.pow(1 - t, 3)
+                const currentTop = startTop + (targetTop - startTop) * eased
+                const currentLeft = startLeft + (targetLeft - startLeft) * eased
+
+                // compute a simple heading for the fallback pin for nicer visuals
+                const dy = (targetTop - startTop)
+                const dx = (targetLeft - startLeft)
+                const angle = Math.atan2(dy, dx) * 180 / Math.PI
+
+                trackingPin.style.top = `${currentTop}%`
+                trackingPin.style.left = `${currentLeft}%`
+                trackingPin.style.transform = `translate(-50%, -50%) rotate(${angle}deg)`
+
+                if (t < 1) {
+                    pinAnimationFrame = window.requestAnimationFrame(tick)
+                } else {
+                    pinAnimationFrame = null
+                }
+            }
+
+            pinAnimationFrame = window.requestAnimationFrame(tick)
+        }
+
+        async function enableNotifications() {
+            if (!('Notification' in window)) return
+            if (Notification.permission === 'default') {
+                try {
+                    await Notification.requestPermission()
+                } catch (error) {
+                    console.warn('Notification permission request failed', error)
+                }
+            }
+        }
+
+        function showToast(message) {
+            if (!trackingToast) return
+            trackingToast.textContent = message
+            trackingToast.classList.add('show')
+            window.clearTimeout(trackingToast._hideTimer)
+            trackingToast._hideTimer = window.setTimeout(() => {
+                trackingToast.classList.remove('show')
+            }, 3200)
+        }
+
+        function pushStageNotification(stageLabel, stageDetail) {
+            const message = `${stageLabel} — ${stageDetail}`
+
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('Food Express order update', {
+                    body: message,
+                    icon: '/static/favicon.ico'
+                })
+            } else {
+                showToast(message)
+            }
+        }
+
+        async function refreshTracking() {
+            try {
+                const response = await fetch('/track-order/{{ order_id }}/status')
+                if (!response.ok) return
+
+                const data = await response.json()
+
+                if (statusElement) statusElement.textContent = data.status
+                if (detailElement) detailElement.textContent = data.detail
+                if (barElement) barElement.style.width = `${data.progress}%`
+                if (etaElement) etaElement.textContent = `${data.eta_minutes} min`
+                if (aiEtaElement) aiEtaElement.textContent = `${data.ai_eta_minutes ?? 0} min`
+                const serverRemainingMinutes = Number(data.ai_remaining_minutes)
+                if (Number.isFinite(serverRemainingMinutes) && serverRemainingMinutes >= 0) {
+                    remainingSeconds = Math.round(serverRemainingMinutes * 60)
+                } else {
+                    const fallbackEtaMinutes = Number(data.eta_minutes)
+                    remainingSeconds = Number.isFinite(fallbackEtaMinutes) ? Math.max(0, Math.round(fallbackEtaMinutes * 60)) : null
+                }
+                renderRemaining()
+                if (aiConfidenceElement) aiConfidenceElement.textContent = `Confidence ${Math.round((data.ai_confidence || 0) * 100)}%`
+                if (aiInsightElement && data.ai_prediction) aiInsightElement.textContent = data.ai_prediction.insight
+                if (updatedAtElement) updatedAtElement.textContent = data.updated_at
+                if (driverAvatar && data.driver) driverAvatar.textContent = data.driver.avatar
+                if (driverName && data.driver) driverName.textContent = data.driver.name
+                if (driverVehicle && data.driver) driverVehicle.textContent = data.driver.vehicle
+                if (restaurantAddress) restaurantAddress.textContent = data.restaurant_address || 'Food Express Kitchen'
+                if (driverAddress) driverAddress.textContent = data.delivery_address || 'Delivery address will appear here.'
+                if (riderBar) riderBar.style.width = `${data.rider_progress}%`
+                if (!hasGoogleMapsCanvas && trackingMap && data.map_url) trackingMap.src = data.map_url
+                if (trackingMapEtaChip && remainingSeconds != null) {
+                    trackingMapEtaChip.textContent = remainingSeconds > 0 ? `ETA ${formatRemaining(remainingSeconds)}` : 'Arriving now'
+                }
+                if (hasGoogleMapsCanvas) {
+                    animateBikeTo(Number(data.rider_progress || 0) / 100, 3600)
+                } else if (trackingPin) {
+                    const targetTop = Math.max(10, 78 - data.rider_progress * 0.58)
+                    const targetLeft = Math.min(78, 12 + data.rider_progress * 0.7)
+                    animatePinTo(targetTop, targetLeft)
+                }
+
+                if (data.stages && data.stages[data.current_stage_index] && data.stages[data.current_stage_index].key !== lastStageKey) {
+                    lastStageKey = data.stages[data.current_stage_index].key
+                    pushStageNotification(data.status, data.detail)
+                }
+
+                stageCards.forEach((card, index) => {
+                    card.classList.toggle('is-active', index === data.current_stage_index)
+                    card.classList.toggle('is-complete', index < data.current_stage_index)
+                })
+            } catch (error) {
+                console.error('Tracking refresh failed', error)
+            }
+        }
+
+        enableNotifications()
+        startCountdown()
+        renderRemaining()
+        if (hasGoogleMapsCanvas) {
+            if (window.google && window.google.maps) {
+                initRealTrackingMap()
+            } else {
+                const mapsScript = document.createElement('script')
+                mapsScript.src = 'https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=geometry'
+                mapsScript.async = true
+                mapsScript.defer = true
+                mapsScript.onload = initRealTrackingMap
+                document.head.appendChild(mapsScript)
+            }
+        }
+        refreshTracking()
+        setInterval(refreshTracking, 5000)
+    })()
+</script>
+{% if payment_qr %}
+<script>
+    (function () {
+        const payBtn = document.getElementById('trackingPaymentBtn')
+        const ok = document.getElementById('trackingPaymentOk')
+        if (!payBtn) return
+
+        payBtn.addEventListener('click', async function () {
+            payBtn.disabled = true
+            payBtn.textContent = 'Waiting for confirmation...'
+
+            const poll = async (attempts = 0) => {
+                try {
+                    const s = await fetch(`/order/{{ order_id }}/payment-status`, { credentials: 'same-origin' })
+                    if (s.ok) {
+                        const json = await s.json()
+                        if (json.paid) {
+                            if (ok) ok.style.display = 'inline-block'
+                            payBtn.textContent = 'Confirmed'
+                            setTimeout(() => { window.location.reload() }, 900)
+                            return
+                        }
+                    }
+                } catch (err) {
+                    console.error(err)
+                }
+
+                if (attempts < 40) setTimeout(() => poll(attempts + 1), 3000)
+                else {
+                    payBtn.disabled = false
+                    payBtn.textContent = 'I have paid'
+                    alert('Payment not confirmed yet. Please try again or contact support.')
+                }
+            }
+
+            poll(0)
+        })
+    })()
+</script>
+{% endif %}
+{% endblock %}

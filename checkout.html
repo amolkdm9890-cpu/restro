@@ -1,0 +1,512 @@
+{% extends "base.html" %}
+
+{% block title %}Food Express | Checkout{% endblock %}
+
+{% block content %}
+{% set checkout_details = checkout_details | default({}, true) %}
+{% set cart_items = cart_items | default([], true) %}
+{% set order_total = order_total | default(0, true) %}
+
+<section class="hero">
+    <span class="muted">Final step</span>
+    <h1>Checkout</h1>
+    <p>Enter all details before placing the order.</p>
+</section>
+
+<section class="panel section-block form-card">
+    {% if order_error %}
+    <p class="footer-note" style="color: #b8531f;">{{ order_error }}</p>
+    {% endif %}
+
+    {% if order_success %}
+    <p class="footer-note" style="color: #1f7a3d;">{{ order_success }}</p>
+    {% endif %}
+
+    <div id="paymentPanelContainer"></div>
+
+    <form method="post" action="/checkout" id="checkoutForm">
+        <input type="text" name="full_name" placeholder="Full name" value="{{ checkout_details.get('full_name', '') }}" required>
+        <input type="email" name="email" placeholder="Email" value="{{ checkout_details.get('email', '') }}" required>
+        <input type="text" name="phone" placeholder="Phone number" value="{{ checkout_details.get('phone', '') }}" required>
+        <textarea name="address" rows="3" placeholder="Address" id="checkoutAddress" required>{{ checkout_details.get('address', '') }}</textarea>
+        <div id="addressSuggestions" class="autocomplete-list" aria-live="polite"></div>
+        <div class="dashboard-card" style="margin: 0.5rem 0 1rem; padding: 1rem;">
+            <h2 style="margin-top: 0;">Delivery map</h2>
+            <p class="muted" id="addressHint">Type your full address to preview it on Google Maps.</p>
+            <div style="position: relative; width: 100%; min-height: 280px; border-radius: 18px; overflow: hidden; border: 1px solid var(--border); background: rgba(255,255,255,0.5);">
+                {% if GOOGLE_MAPS_API_KEY %}
+                <div id="checkoutMapDiv" style="width:100%; height:280px;"></div>
+                {% else %}
+                <iframe
+                    id="checkoutMap"
+                    title="Google Maps preview"
+                    src="https://www.google.com/maps?q=India&output=embed"
+                    width="100%"
+                    height="280"
+                    style="border: 0; width: 100%; height: 280px;"
+                    loading="lazy"
+                    referrerpolicy="no-referrer-when-downgrade">
+                </iframe>
+                {% endif %}
+                <input type="hidden" name="latitude" id="checkoutLat">
+                <input type="hidden" name="longitude" id="checkoutLng">
+                <input type="hidden" name="location_confirmed" id="locationConfirmed" value="false">
+                <div id="locationPreview" style="padding:0.6rem 0; display:none;">
+                    <div style="display:flex; gap:0.6rem; align-items:center;">
+                        <div id="locationCoords" style="font-weight:700;">Lat: —, Lng: —</div>
+                        <div class="muted" id="locationAddrPreview" style="font-size:0.95rem;">No address selected</div>
+                        <div style="margin-left:auto; display:flex; gap:0.4rem;">
+                            <button type="button" id="confirmLocationBtn" class="btn btn-primary">Confirm location</button>
+                            <button type="button" id="clearLocationBtn" class="btn btn-ghost">Clear</button>
+                        </div>
+                    </div>
+                    <div id="locationConfirmHint" class="muted" style="margin-top:0.25rem; font-size:0.9rem;">Click the map pin or choose from suggestions, then confirm to use this location for delivery.</div>
+                </div>
+            </div>
+        </div>
+        <select name="payment_method" required>
+            <option value="" disabled {% if not checkout_details.get('payment_method') %}selected{% endif %}>Select payment method</option>
+            <option value="Cash on Delivery" {% if checkout_details.get('payment_method') == 'Cash on Delivery' %}selected{% endif %}>Cash on Delivery</option>
+            <option value="Online Payment" {% if checkout_details.get('payment_method') == 'Online Payment' %}selected{% endif %}>Online Payment</option>
+        </select>
+
+        <input type="hidden" name="cart_payload" id="cartPayload">
+
+        <div class="cart-container" id="checkoutItems">
+            {% for item in cart_items %}
+            <div class="cart-item">
+                <h2>{{ item.name }}</h2>
+                <p>₹{{ item.price }}</p>
+            </div>
+            {% endfor %}
+        </div>
+
+        <h2 class="page-title" id="checkoutTotal" style="font-size: 1.5rem; margin: 0;">Total: ₹{{ order_total }}</h2>
+        <div style="margin-top:0.75rem; display:flex; gap:0.6rem; align-items:center;">
+            <button type="submit" class="btn btn-primary" aria-label="Place order">Place Order</button>
+            <div id="inlinePaymentQr" style="margin-left:0.6rem; display:flex; align-items:center; gap:0.6rem;"></div>
+            <a href="/menu" class="btn btn-ghost" style="margin-left:auto;">Continue shopping</a>
+        </div>
+    </form>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    (function () {
+        const itemsContainer = document.getElementById('checkoutItems')
+        const cartPayload = document.getElementById('cartPayload')
+        const totalElement = document.getElementById('checkoutTotal')
+        const addressInput = document.getElementById('checkoutAddress')
+        const mapFrame = document.getElementById('checkoutMap')
+        const addressHint = document.getElementById('addressHint')
+        if (!itemsContainer || !cartPayload) return
+
+        const updateMap = () => {
+            if (!addressInput) return
+
+            const cityScope = 'Chh. Sambhajinagar'
+            const address = addressInput.value.trim()
+
+            // If interactive map is available, geocode the address and place marker
+            if (typeof map !== 'undefined' && map && typeof geocoder !== 'undefined' && geocoder) {
+                if (!address) {
+                    const center = { lat: 19.85, lng: 75.35 }
+                    map.setCenter(center)
+                    if (marker) marker.setPosition(null)
+                    if (addressHint) addressHint.textContent = `Showing map for ${cityScope}. Type your full address to preview it here.`
+                    document.getElementById('checkoutLat').value = ''
+                    document.getElementById('checkoutLng').value = ''
+                    return
+                }
+
+                geocoder.geocode({ address: address + ', ' + cityScope }, function (results, status) {
+                    if (status === 'OK' && results && results[0]) {
+                        const loc = results[0].geometry.location
+                        if (marker) marker.setPosition(loc)
+                        map.setCenter(loc)
+                        document.getElementById('checkoutLat').value = loc.lat()
+                        document.getElementById('checkoutLng').value = loc.lng()
+                        if (addressHint) addressHint.textContent = `Previewing: ${results[0].formatted_address}`
+                        updateLocationPreview(results[0].formatted_address)
+                    } else {
+                        if (addressHint) addressHint.textContent = `Previewing: ${address}, ${cityScope}`
+                    }
+                })
+                return
+            }
+
+            // Fallback: iframe-based preview
+            const mapFrame = document.getElementById('checkoutMap')
+            if (!mapFrame) return
+
+            if (!address) {
+                mapFrame.src = `https://www.google.com/maps?q=${encodeURIComponent(cityScope)}&output=embed`
+                if (addressHint) {
+                    addressHint.textContent = `Showing map for ${cityScope}. Type your full address to preview it here.`
+                }
+                return
+            }
+
+            const query = encodeURIComponent(address + ', ' + cityScope)
+            mapFrame.src = `https://www.google.com/maps?q=${query}&output=embed`
+            if (addressHint) {
+                addressHint.textContent = `Previewing: ${address}, ${cityScope}`
+            }
+        }
+
+        const cart = JSON.parse(sessionStorage.getItem('cart') || '[]')
+        cartPayload.value = JSON.stringify(cart)
+
+        // Use Google Places Autocomplete (city-biased) if available; fall back to simple map update
+        if (addressInput) {
+            addressInput.addEventListener('input', () => { updateMap() })
+            addressInput.addEventListener('change', updateMap)
+            updateMap()
+        }
+
+        if (!itemsContainer.children.length) {
+            let total = 0
+            itemsContainer.innerHTML = ''
+
+            cart.forEach(item => {
+                total += Number(item.price) || 0
+
+                itemsContainer.innerHTML += `
+                    <div class="cart-item">
+                        <h2>${item.name}</h2>
+                        <p>₹${item.price}</p>
+                    </div>
+                `
+            })
+
+            if (totalElement) {
+                totalElement.textContent = `Total: ₹${total}`
+            }
+        }
+
+        {% if order_success and not payment_qr %}
+        sessionStorage.removeItem('cart')
+        {% endif %}
+    })()
+</script>
+<script>
+// Initialize Google Places Autocomplete (loads when Google Maps script calls callback)
+let map, marker, geocoder;
+
+function initMap() {
+    try {
+        const mapDiv = document.getElementById('checkoutMapDiv')
+        const input = document.getElementById('checkoutAddress')
+        const addressHint = document.getElementById('addressHint')
+        geocoder = new google.maps.Geocoder()
+
+        // Center roughly on Chh. Sambhajinagar
+        const center = { lat: 19.85, lng: 75.35 }
+        map = new google.maps.Map(mapDiv, {
+            center: center,
+            zoom: 13,
+            fullscreenControl: false,
+            streetViewControl: false,
+        })
+
+        marker = new google.maps.Marker({ map: map })
+
+        // Click on map to select location
+        map.addListener('click', function (e) {
+            const latlng = e.latLng
+            marker.setPosition(latlng)
+            map.panTo(latlng)
+            document.getElementById('checkoutLat').value = latlng.lat()
+            document.getElementById('checkoutLng').value = latlng.lng()
+
+            // Reverse geocode to populate address textarea when possible
+            if (geocoder) {
+                geocoder.geocode({ location: latlng }, function (results, status) {
+                    if (status === 'OK' && results && results[0]) {
+                        const addr = results[0].formatted_address
+                        if (input) input.value = addr
+                        if (addressHint) addressHint.textContent = `Selected: ${addr}`
+                            updateLocationPreview(addr)
+                    } else {
+                        if (addressHint) addressHint.textContent = `Selected location: ${latlng.lat().toFixed(6)}, ${latlng.lng().toFixed(6)}`
+                            updateLocationPreview()
+                    }
+                })
+            }
+        })
+
+        // If there's an existing address value, try to geocode and put marker
+        if (input && input.value && input.value.trim()) {
+            geocoder.geocode({ address: input.value + ', Chh. Sambhajinagar' }, function (results, status) {
+                if (status === 'OK' && results && results[0]) {
+                    const loc = results[0].geometry.location
+                    marker.setPosition(loc)
+                    map.setCenter(loc)
+                    document.getElementById('checkoutLat').value = loc.lat()
+                    document.getElementById('checkoutLng').value = loc.lng()
+                    if (addressHint) addressHint.textContent = `Previewing: ${results[0].formatted_address}`
+                            updateLocationPreview(results[0].formatted_address)
+                }
+            })
+        }
+
+        // After map ready, initialize autocomplete to bind with map
+        initPlaces()
+    } catch (e) { console.error('initMap error', e) }
+}
+
+function initPlaces() {
+    try {
+        const input = document.getElementById('checkoutAddress')
+        const addressHint = document.getElementById('addressHint')
+        if (!input || !google || !google.maps) return
+
+        // City bounds for Chh. Sambhajinagar (approx)
+        const cityBounds = new google.maps.LatLngBounds(
+            { lat: 19.50, lng: 75.00 },
+            { lat: 20.20, lng: 75.70 }
+        )
+
+        const options = {
+            bounds: cityBounds,
+            strictBounds: false,
+            types: ['address']
+        }
+
+        const autocomplete = new google.maps.places.Autocomplete(input, options)
+
+        autocomplete.addListener('place_changed', function () {
+            const place = autocomplete.getPlace()
+            if (!place) return
+
+            const q = place.formatted_address || input.value
+            if (place.geometry && place.geometry.location) {
+                const loc = place.geometry.location
+                if (marker) marker.setPosition(loc)
+                if (map) map.setCenter(loc)
+                document.getElementById('checkoutLat').value = loc.lat()
+                document.getElementById('checkoutLng').value = loc.lng()
+                updateLocationPreview(place.formatted_address || input.value)
+            }
+
+            if (addressHint) addressHint.textContent = `Previewing: ${q}`
+        })
+    } catch (e) { console.error('Places init error', e) }
+}
+
+// Update location preview UI
+function updateLocationPreview(addr) {
+    try {
+        const lat = document.getElementById('checkoutLat').value
+        const lng = document.getElementById('checkoutLng').value
+        const preview = document.getElementById('locationPreview')
+        const coords = document.getElementById('locationCoords')
+        const addrPrev = document.getElementById('locationAddrPreview')
+        const confirmed = document.getElementById('locationConfirmed')
+        if (!preview || !coords || !confirmed) return
+
+        if (lat && lng) {
+            coords.textContent = `Lat: ${Number(lat).toFixed(6)}, Lng: ${Number(lng).toFixed(6)}`
+            addrPrev.textContent = addr || ''
+            preview.style.display = 'block'
+            confirmed.value = 'false'
+        } else {
+            preview.style.display = 'none'
+            confirmed.value = 'false'
+        }
+    } catch (e) { console.error('updateLocationPreview', e) }
+}
+
+function confirmLocation() {
+    const confirmed = document.getElementById('locationConfirmed')
+    const hint = document.getElementById('locationConfirmHint')
+    if (!confirmed) return
+    confirmed.value = 'true'
+    if (hint) hint.textContent = 'Location confirmed — ready for delivery.'
+}
+
+function clearLocation() {
+    const lat = document.getElementById('checkoutLat')
+    const lng = document.getElementById('checkoutLng')
+    const confirmed = document.getElementById('locationConfirmed')
+    const input = document.getElementById('checkoutAddress')
+    if (lat) lat.value = ''
+    if (lng) lng.value = ''
+    if (confirmed) confirmed.value = 'false'
+    if (input) input.value = ''
+    updateLocationPreview()
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    const confirmBtn = document.getElementById('confirmLocationBtn')
+    const clearBtn = document.getElementById('clearLocationBtn')
+    if (confirmBtn) confirmBtn.addEventListener('click', confirmLocation)
+    if (clearBtn) clearBtn.addEventListener('click', clearLocation)
+})
+</script>
+<!-- Google Maps Places API -->
+{% if GOOGLE_MAPS_API_KEY %}
+<script src="https://maps.googleapis.com/maps/api/js?key={{ GOOGLE_MAPS_API_KEY }}&libraries=places&callback=initMap" async defer></script>
+{% else %}
+<div class="footer-note" style="color:#b8531f; margin-top:0.6rem;">Google Maps is not configured. Set the environment variable <strong>GOOGLE_MAPS_API_KEY</strong> and restart the server to enable address autocomplete and map previews.</div>
+<script>console.warn('Google Maps API key missing: address autocomplete and map preview disabled.')</script>
+{% endif %}
+    <script>
+        (function () {
+            const form = document.getElementById('paymentConfirmForm')
+            const btn = document.getElementById('paymentConfirmBtn')
+            const ok = document.getElementById('paymentConfirmSuccess')
+            if (!form || !btn) return
+
+            form.addEventListener('submit', async function (ev) {
+                ev.preventDefault()
+                btn.disabled = true
+                const originalText = btn.textContent
+                btn.textContent = 'Checking payment...'
+
+                try {
+                    const formData = new FormData(form)
+                    const resp = await fetch(form.action, {
+                        method: 'POST',
+                        body: formData,
+                        credentials: 'same-origin',
+                        redirect: 'follow',
+                    })
+
+                    if (!resp.ok) {
+                        btn.disabled = false
+                        btn.textContent = originalText
+                        alert('Payment confirmation failed. Please try again.')
+                        return
+                    }
+
+                    // show success tick then navigate to final page (resp.url is final after redirects)
+                    if (ok) {
+                        ok.style.display = 'inline-block'
+                    }
+                    btn.textContent = 'Confirmed'
+
+                    const destination = resp.url || '/'
+                    setTimeout(() => { window.location.href = destination }, 900)
+                } catch (err) {
+                    console.error(err)
+                    btn.disabled = false
+                    btn.textContent = originalText
+                    alert('Network error while confirming payment.')
+                }
+            })
+        })()
+    </script>
+
+    <script>
+    (function () {
+        const form = document.getElementById('checkoutForm')
+        const paymentPanel = document.getElementById('paymentPanelContainer')
+        if (!form || !paymentPanel) return
+
+        form.addEventListener('submit', async function (ev) {
+            const fm = new FormData(form)
+            const method = fm.get('payment_method')
+            if (method !== 'Online Payment') return // allow normal submit
+
+            ev.preventDefault()
+            const submitBtn = form.querySelector('button[type="submit"]')
+            if (submitBtn) submitBtn.disabled = true
+
+            try {
+                const resp = await fetch(form.action, {
+                    method: 'POST',
+                    body: fm,
+                    credentials: 'same-origin',
+                    headers: { 'X-Requested-With': 'XMLHttpRequest', 'Accept': 'application/json' },
+                })
+
+                if (!resp.ok) {
+                    alert('Failed to initiate payment. Please try again.')
+                    if (submitBtn) submitBtn.disabled = false
+                    return
+                }
+
+                const data = await resp.json()
+                if (!data || !data.payment_qr) {
+                    alert('Payment QR not available. Please try Cash on Delivery or try again later.')
+                    if (submitBtn) submitBtn.disabled = false
+                    return
+                }
+
+                // render compact QR panel (no large image)
+                paymentPanel.innerHTML = `
+                    <div class="dashboard-card" style="margin-bottom: 1rem; text-align: center;">
+                        <h2 style="margin-top: 0;">Online Payment</h2>
+                        <p class="muted">Reference: ${data.payment_reference}</p>
+                        <p class="muted">Scan the QR beside the button to pay, then confirm below.</p>
+                        <div style="margin-top:0.6rem; display:flex; justify-content:center; gap:0.8rem; align-items:center;">
+                            <button id="ajaxPaymentConfirmBtn" class="btn btn-primary">I have paid</button>
+                            <span id="ajaxPaymentOk" style="display:none; color:#1f7a3d; font-weight:800;">✓ Paid</span>
+                        </div>
+                    </div>
+                `
+
+                // render compact inline QR beside submit button
+                const inline = document.getElementById('inlinePaymentQr')
+                if (inline) {
+                    inline.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:0.5rem;">
+                            <img alt="QR" src="data:image/png;base64,${data.payment_qr}" style="width:120px; height:auto; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.08);">
+                            <div style="font-size:0.9rem;">
+                                <div style="font-weight:700;">${data.payment_reference}</div>
+                                <div class="muted">Scan to pay</div>
+                            </div>
+                        </div>
+                    `
+                }
+
+                // attach handler to confirm button — start polling payment status
+                const ajaxBtn = document.getElementById('ajaxPaymentConfirmBtn')
+                const ajaxOk = document.getElementById('ajaxPaymentOk')
+                if (ajaxBtn) {
+                    ajaxBtn.addEventListener('click', async function () {
+                        ajaxBtn.disabled = true
+                        ajaxBtn.textContent = 'Waiting for confirmation...'
+                        const orderId = data.order_id
+
+                        const poll = async (attempts = 0) => {
+                            try {
+                                const s = await fetch(`/order/${orderId}/payment-status`, { credentials: 'same-origin' })
+                                if (s.ok) {
+                                    const json = await s.json()
+                                    if (json.paid) {
+                                        if (ajaxOk) ajaxOk.style.display = 'inline-block'
+                                        ajaxBtn.textContent = 'Confirmed'
+                                        setTimeout(() => { window.location.href = `/track-order/${orderId}` }, 900)
+                                        return
+                                    }
+                                }
+                            } catch (e) {
+                                console.error(e)
+                            }
+
+                            if (attempts < 40) { // poll up to ~2 minutes
+                                setTimeout(() => poll(attempts + 1), 3000)
+                            } else {
+                                ajaxBtn.disabled = false
+                                ajaxBtn.textContent = 'I have paid'
+                                alert('Payment not confirmed yet. Please try again or contact support.')
+                            }
+                        }
+
+                        poll(0)
+                    })
+                }
+
+            } catch (err) {
+                console.error(err)
+                alert('Network error while initiating payment')
+                const submitBtn = form.querySelector('button[type="submit"]')
+                if (submitBtn) submitBtn.disabled = false
+            }
+        })
+    })()
+    </script>
+{% endblock %}

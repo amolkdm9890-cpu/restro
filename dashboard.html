@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+
+{% block title %}Food Express | Dashboard{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <span class="muted">Personal dashboard</span>
+    <h1>Welcome, {{ user.username }}</h1>
+    <p>Here are your saved account details.</p>
+</section>
+
+<section class="section-block">
+    <div class="grid stats">
+        <article class="dashboard-card">
+            <h3>Username</h3>
+            <p>{{ user.username }}</p>
+        </article>
+        <article class="dashboard-card">
+            <h3>Email</h3>
+            <p>{{ user.email }}</p>
+        </article>
+        <article class="dashboard-card">
+            <h3>Phone</h3>
+            <p>{{ user.phone or 'Not provided' }}</p>
+        </article>
+        <article class="dashboard-card">
+            <h3>Address</h3>
+            <p>{{ user.address or 'Not provided' }}</p>
+        </article>
+    </div>
+</section>
+
+<section class="section-block">
+    <a class="button-secondary" href="/menu">Continue ordering</a>
+</section>
+{% if orders %}
+<section class="section-block">
+    <h2>Your Orders</h2>
+    <div class="dashboard-card" style="margin-top:0.6rem;">
+        <table>
+            <thead>
+                <tr><th>Order ID</th><th>Date</th><th>Total</th><th>Status</th><th>Items</th></tr>
+            </thead>
+            <tbody>
+                {% for o in orders %}
+                <tr>
+                    <td>{{ o.id }}</td>
+                    <td>{{ o.created_at or '—' }}</td>
+                    <td>₹{{ '%.2f'|format(o.total) }}</td>
+                    <td>{{ o.status }}</td>
+                    <td>
+                        {% if o.cart_items %}
+                            <ul style="margin:0;padding-left:16px;">
+                            {% for it in o.cart_items[:4] %}
+                                <li>{{ it.name or it.title or it }}</li>
+                            {% endfor %}
+                            {% if o.cart_items|length > 4 %}
+                                <li>and {{ o.cart_items|length - 4 }} more…</li>
+                            {% endif %}
+                            </ul>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endif %}
+{% endblock %}
