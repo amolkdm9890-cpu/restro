@@ -1,0 +1,53 @@
+{% extends "base.html" %}
+
+{% block title %}Reservation Receipt — Quick Bite{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <h1>Reservation Confirmed</h1>
+    <p class="muted">Thank you — here is your booking receipt.</p>
+</section>
+
+<section class="panel section-block form-card">
+    <div style="max-width:720px;margin:0 auto;">
+        <div class="card-body">
+            <h2 style="margin-bottom:6px;">Receipt: {{ receipt.receipt_no }}</h2>
+            <p class="muted">Issued at {{ receipt.issued_at }}</p>
+            <hr style="margin:12px 0;">
+            <dl>
+                <dt><strong>Reservation ID</strong></dt>
+                <dd>{{ receipt.reservation_id }}</dd>
+                <dt><strong>Name</strong></dt>
+                <dd>{{ receipt.username }}</dd>
+                <dt><strong>Table</strong></dt>
+                <dd>{{ receipt.table }}</dd>
+                <dt><strong>Date & Time</strong></dt>
+                <dd>{{ receipt.date }} {{ receipt.time }}</dd>
+                <dt><strong>Guests</strong></dt>
+                <dd>{{ receipt.guests }}</dd>
+                <dt><strong>Phone</strong></dt>
+                <dd>{{ receipt.phone or '—' }}</dd>
+                <dt><strong>Email</strong></dt>
+                <dd>{{ receipt.email or '—' }}</dd>
+            </dl>
+
+            <hr style="margin:12px 0;">
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+                <div>
+                    <div class="muted">Booking Fee</div>
+                    <div style="font-weight:800;font-size:1.2rem">₹{{ '%.2f'|format(receipt.booking_fee) }}</div>
+                </div>
+                <div>
+                    <div class="muted">Payment method</div>
+                    <div style="font-weight:700">{{ receipt.payment_method }}</div>
+                </div>
+            </div>
+
+            <div style="margin-top:1rem;display:flex;gap:0.75rem;">
+                <a href="/" class="btn btn-ghost">Back to Home</a>
+                <button onclick="window.print()" class="btn btn-primary">Print Receipt</button>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

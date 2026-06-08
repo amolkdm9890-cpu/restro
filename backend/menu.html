@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+
+{% block title %}Food Express | Menu{% endblock %}
+
+{% block content %}
+<div class="menu-toolbar">
+    <div>
+        <h1 class="page-title">Menu</h1>
+        <p class="muted">Browse Indian foods grouped by category.</p>
+    </div>
+    <a class="btn btn-ghost" href="/cart">View Cart</a>
+</div>
+
+{% for section in menu_sections %}
+<section class="section-block">
+    <div class="menu-toolbar" style="margin-bottom: 0.9rem;">
+        <div>
+            <h2 class="section-title" style="font-size: 2rem; margin-bottom: 0.3rem;">{{ section["title"] }}</h2>
+            <p class="muted">{{ section["description"] }}</p>
+        </div>
+    </div>
+
+    <div class="grid cards" role="list">
+        {% for item in section["items"] %}
+        <article class="card" role="listitem" aria-labelledby="menu-item-{{ loop.index }}-title">
+            <a href="{{ url_for('static', filename=item.image) }}" target="_blank" rel="noopener noreferrer" aria-label="Open {{ item.name }} image in a new tab">
+                <img src="{{ url_for('static', filename=item.image) }}" alt="{{ item.name }}">
+            </a>
+            <div class="card-body">
+                <h3 id="menu-item-{{ loop.index }}-title">{{ item.name }}</h3>
+                <p>{{ item.note }}</p>
+                <div class="card-foot">
+                    <button class="btn btn-primary" type="button" data-add-to-cart data-name="{{ item.name }}" data-price="{{ item.price }}" aria-label="Add {{ item.name }} to cart">Add</button>
+                    <span class="muted">₹{{ item.price }}</span>
+                </div>
+            </div>
+        </article>
+        {% endfor %}
+    </div>
+</section>
+{% endfor %}
+{% endblock %}

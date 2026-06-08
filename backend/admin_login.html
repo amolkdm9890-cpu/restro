@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+
+{% block title %}Food Express | Admin Login{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <span class="muted">Admin access</span>
+    <h1>Admin Login</h1>
+    <p>Please sign in to manage orders and confirmations.</p>
+</section>
+
+<section class="section-block">
+    <div class="auth-card">
+        <form method="post">
+            {% if error %}
+            <p class="footer-note" style="color: #b8531f;">{{ error }}</p>
+            {% endif %}
+            <label>Username</label>
+            <input name="username" placeholder="admin" required />
+            <label>Password</label>
+            <input name="password" type="password" placeholder="password" required />
+            <div style="display:flex; gap:0.8rem; margin-top:0.6rem;">
+                <button type="submit">Sign in</button>
+                <a class="button-secondary" href="/">Back to site</a>
+            </div>
+        </form>
+    </div>
+</section>
+{% endblock %}

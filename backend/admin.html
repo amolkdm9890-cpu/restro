@@ -1,0 +1,185 @@
+{% extends "base.html" %}
+
+{% block title %}Food Express | Admin{% endblock %}
+
+{% block content %}
+{% set body_class = 'admin-theme' %}
+<section class="hero">
+    <span class="muted">Operations overview</span>
+    <h1>Admin Dashboard</h1>
+    <p>Track orders, revenue, users, reservations, and approval requests from one place.</p>
+</section>
+
+<section class="grid stats section-block">
+    <article class="dashboard-card">
+        <h3>Total Orders</h3>
+        <p>{{ total_orders }}</p>
+    </article>
+    <article class="dashboard-card">
+        <h3>Total Revenue</h3>
+        <p>₹{{ "%.2f"|format(total_revenue or 0) }}</p>
+    </article>
+    <article class="dashboard-card">
+        <h3>Total Users</h3>
+        <p>{{ total_users }}</p>
+    </article>
+    <article class="dashboard-card">
+        <h3>Reservations</h3>
+        <p>{{ total_reservations }}</p>
+    </article>
+</section>
+
+<section class="section-block">
+    <div class="dashboard-card" style="margin-bottom:1rem;">
+        <h2>Sales Overview</h2>
+        <div style="display:flex;gap:1rem;flex-wrap:wrap;margin-top:0.6rem;">
+            <div style="flex:1;min-width:160px;background:var(--surface);padding:12px;border-radius:12px;border:1px solid var(--border);">
+                <div class="muted">Total Revenue</div>
+                <div style="font-weight:800;font-size:1.4rem">₹{{ '%.2f'|format(total_revenue or 0) }}</div>
+            </div>
+            <div style="flex:1;min-width:160px;background:var(--surface);padding:12px;border-radius:12px;border:1px solid var(--border);">
+                <div class="muted">Total Orders</div>
+                <div style="font-weight:800;font-size:1.4rem">{{ total_orders }}</div>
+            </div>
+            <div style="flex:1;min-width:160px;background:var(--surface);padding:12px;border-radius:12px;border:1px solid var(--border);">
+                <div class="muted">Reservations</div>
+                <div style="font-weight:800;font-size:1.4rem">{{ total_reservations }}</div>
+            </div>
+        </div>
+
+        <h3 style="margin-top:1rem;margin-bottom:0.4rem;">Last 7 days</h3>
+        <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
+            {% for day in daily_sales %}
+            <div style="min-width:110px;background:var(--surface);padding:10px;border-radius:10px;border:1px solid var(--border);">
+                <div class="muted" style="font-size:0.85rem">{{ day.date }}</div>
+                <div style="font-weight:700">₹{{ '%.2f'|format(day.sales) }}</div>
+            </div>
+            {% endfor %}
+        </div>
+        <div style="margin-top:1rem;">
+            <canvas id="salesChart" height="120"></canvas>
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <h2>Top Selling Products</h2>
+        <div style="display:flex;gap:1rem;align-items:flex-start;">
+            <ol style="margin-top:0.6rem;padding-left:1.25rem;flex:1;">
+            {% for name, count in top_products %}
+            <li style="margin-bottom:0.3rem;"><strong>{{ name }}</strong> — {{ count }} sold</li>
+            {% else %}
+            <li class="muted">No product sales data yet.</li>
+            {% endfor %}
+            </ol>
+            <div style="flex:1;min-width:260px;">
+                <canvas id="productsChart" height="220"></canvas>
+            </div>
+        </div>
+    </div>
+</section>
+
+<section class="section-block">
+    <div class="dashboard-card" style="margin-bottom:1rem;">
+        <h2>Recent Reservations</h2>
+        <table style="width:100%;border-collapse:collapse;margin-top:0.6rem;">
+            <thead>
+                <tr class="muted"><th style="text-align:left;padding:8px">ID</th><th style="text-align:left;padding:8px">Name</th><th style="text-align:left;padding:8px">When</th><th style="text-align:left;padding:8px">Guests</th></tr>
+            </thead>
+            <tbody>
+                {% for r in recent_reservations %}
+                <tr><td style="padding:8px">{{ r.id }}</td><td style="padding:8px">{{ r.username }}</td><td style="padding:8px">{{ r.date }} {{ r.time }}</td><td style="padding:8px">{{ r.guests }}</td></tr>
+                {% else %}
+                <tr><td colspan="4" class="muted" style="padding:8px">No reservations yet.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="dashboard-card">
+        <h2>Recent Online Orders</h2>
+        <table style="width:100%;border-collapse:collapse;margin-top:0.6rem;">
+            <thead>
+                <tr class="muted"><th style="text-align:left;padding:8px">Order ID</th><th style="text-align:left;padding:8px">Customer</th><th style="text-align:left;padding:8px">Total</th><th style="text-align:left;padding:8px">Method</th></tr>
+            </thead>
+            <tbody>
+                {% for o in recent_orders %}
+                <tr><td style="padding:8px">{{ o.order_id }}</td><td style="padding:8px">{{ o.checkout_details.full_name }}</td><td style="padding:8px">₹{{ '%.2f'|format(o.order_total) }}</td><td style="padding:8px">{{ o.payment_method }}</td></tr>
+                {% else %}
+                <tr><td colspan="4" class="muted" style="padding:8px">No recent online orders.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="section-block">
+    <div class="dashboard-card" style="margin-bottom: 1rem;">
+        <h2 style="margin-top: 0;">Pending order requests</h2>
+        <p class="muted">Approve orders before they move to tracking.</p>
+        <div class="grid" style="margin-top: 1rem;">
+            {% for notification in pending_notifications %}
+            <article class="dashboard-card" style="box-shadow: none; background: rgba(255,255,255,0.72);">
+                <div class="menu-toolbar" style="margin-bottom: 0.5rem;">
+                    <div>
+                        <h3 style="margin-bottom: 0.2rem;">Order #{{ notification.order_id }}</h3>
+                        <p class="muted">{{ notification.checkout_details.full_name }} • {{ notification.payment_method }}</p>
+                    </div>
+                    <form action="{{ url_for('admin.confirm_order', order_id=notification.order_id) }}" method="post">
+                        <button type="submit">Confirm</button>
+                    </form>
+                </div>
+                <p><strong>Address:</strong> {{ notification.checkout_details.address }}</p>
+                {% if notification.checkout_details.location_confirmed %}
+                <p><strong>Confirmed location:</strong>
+                    {% if notification.checkout_details.latitude and notification.checkout_details.longitude %}
+                        Lat: {{ notification.checkout_details.latitude }}, Lng: {{ notification.checkout_details.longitude }}
+                        <br>
+                        <iframe src="https://www.google.com/maps?q={{ notification.checkout_details.latitude }},{{ notification.checkout_details.longitude }}&output=embed" width="100%" height="180" style="border:0;margin-top:0.5rem;border-radius:8px;" loading="lazy"></iframe>
+                    {% else %}
+                        Coordinates not available
+                    {% endif %}
+                </p>
+                {% endif %}
+                <p><strong>Total:</strong> ₹{{ "%.2f"|format(notification.order_total or 0) }}</p>
+                <p><strong>Items:</strong> {{ notification.cart_items | length }}</p>
+            </article>
+            {% else %}
+            <p class="muted">No pending requests right now.</p>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="dashboard-card">
+        <h2 style="margin-top: 0;">Recent confirmations</h2>
+        <div class="grid" style="margin-top: 1rem;">
+            {% for notification in confirmed_notifications %}
+            <article class="dashboard-card" style="box-shadow: none; background: rgba(255,255,255,0.72);">
+                <h3 style="margin-bottom: 0.2rem;">Order #{{ notification.order_id }}</h3>
+                <p class="muted">Confirmed at {{ notification.confirmed_at }}</p>
+                        {% if notification.checkout_details.location_confirmed %}
+                        <p><strong>Confirmed location:</strong>
+                            {% if notification.checkout_details.latitude and notification.checkout_details.longitude %}
+                                Lat: {{ notification.checkout_details.latitude }}, Lng: {{ notification.checkout_details.longitude }}
+                                <br>
+                                <iframe src="https://www.google.com/maps?q={{ notification.checkout_details.latitude }},{{ notification.checkout_details.longitude }}&output=embed" width="100%" height="180" style="border:0;margin-top:0.5rem;border-radius:8px;" loading="lazy"></iframe>
+                            {% else %}
+                                Coordinates not available
+                            {% endif %}
+                        </p>
+                        {% endif %}
+            </article>
+            {% else %}
+            <p class="muted">Confirmed orders will appear here.</p>
+            {% endfor %}
+        </div>
+    </div>
+</section>
+{% endblock %}
+{% block scripts %}
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        const DAILY_SALES = {{ daily_sales | tojson | safe }};
+        const TOP_PRODUCTS = {{ top_products | tojson | safe }};
+    </script>
+    <script src="{{ url_for('static', filename='js/admin.js') }}"></script>
+{% endblock %}

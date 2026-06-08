@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Food Express | Home{% endblock %}
+
+{% block content %}
+<section class="hero" aria-labelledby="home-hero-title">
+    <div class="hero-inner">
+        <span class="muted">Fresh dining, fast ordering</span>
+        <h1 id="home-hero-title">Delicious food delivered with less waiting and more flavor.</h1>
+        <p>Browse chef-picked dishes, add them to your cart, and reserve a table from one clean, polished interface.</p>
+        <div class="hero-cta">
+            <a class="btn btn-primary" href="/menu" aria-label="Explore menu">Explore Menu</a>
+            <a class="btn btn-ghost" href="/reservation" aria-label="Book a table">Book a Table</a>
+        </div>
+    </div>
+</section>
+
+<section class="section-block">
+    <div class="menu-toolbar">
+        <div>
+            <h2 class="section-title">All Foods</h2>
+            <p class="muted">Every dish from the menu is shown here on the home screen.</p>
+        </div>
+        <a class="button-secondary" href="/menu">Open Full Menu</a>
+    </div>
+
+    {% for section in menu_sections %}
+    <section class="section-block">
+        <div class="menu-toolbar" style="margin-bottom: 0.9rem;">
+            <div>
+                <h3 class="section-title" style="font-size: 1.7rem; margin-bottom: 0.3rem;">{{ section["title"] }}</h3>
+                <p class="muted">{{ section["description"] }}</p>
+            </div>
+        </div>
+
+        <div class="grid cards">
+            {% for item in section["items"] %}
+            <article class="card" role="article" aria-labelledby="item-{{ loop.index }}-title">
+                <img src="{{ url_for('static', filename=item.image) }}" alt="{{ item.name }}">
+                <div class="card-body">
+                    <h3 id="item-{{ loop.index }}-title">{{ item.name }}</h3>
+                    <p>{{ item.note }}</p>
+                    <div class="card-foot">
+                        <button class="btn btn-primary" type="button" data-add-to-cart data-name="{{ item.name }}" data-price="{{ item.price }}" aria-label="Add {{ item.name }} to cart">Add</button>
+                        <span class="muted">₹{{ item.price }}</span>
+                    </div>
+                </div>
+            </article>
+            {% endfor %}
+        </div>
+    </section>
+    {% endfor %}
+</section>
+{% endblock %}

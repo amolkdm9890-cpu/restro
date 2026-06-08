@@ -1,0 +1,574 @@
+[
+  {
+    "order_id": 34,
+    "status": "pending",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "amol",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jay tower",
+      "latitude": null,
+      "longitude": null,
+      "location_confirmed": false,
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Masala Chai",
+        "price": 1
+      }
+    ],
+    "order_total": 1.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-06-04T10:49:25",
+    "confirmed_at": null
+  },
+  {
+    "order_id": 33,
+    "status": "pending",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "amol",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jhh",
+      "latitude": null,
+      "longitude": null,
+      "location_confirmed": false,
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Masala Chai",
+        "price": 1
+      }
+    ],
+    "order_total": 1.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-06-04T10:49:00",
+    "confirmed_at": null
+  },
+  {
+    "order_id": 32,
+    "status": "pending",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "amol",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jay tower",
+      "latitude": null,
+      "longitude": null,
+      "location_confirmed": false,
+      "payment_method": "Online Payment"
+    },
+    "cart_items": [
+      {
+        "name": "Masala Chai",
+        "price": 1
+      }
+    ],
+    "order_total": 1.0,
+    "payment_method": "Online Payment",
+    "created_at": "2026-06-04T10:46:35",
+    "confirmed_at": null
+  },
+  {
+    "order_id": 31,
+    "status": "pending",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jvjj",
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Masala Chai",
+        "price": 1
+      }
+    ],
+    "order_total": 1.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-06-04T08:25:38",
+    "confirmed_at": null
+  },
+  {
+    "order_id": 30,
+    "status": "confirmed",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jaytower",
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Paneer Butter Masala",
+        "price": 279
+      }
+    ],
+    "order_total": 279.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-06-01T05:00:15",
+    "confirmed_at": "2026-06-01T05:00:27"
+  },
+  {
+    "order_id": 29,
+    "status": "pending",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "relway station",
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Paneer Butter Masala",
+        "price": 279
+      }
+    ],
+    "order_total": 279.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-06-01T04:55:16",
+    "confirmed_at": null
+  },
+  {
+    "order_id": 28,
+    "status": "confirmed",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jaytower",
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Masala Chai",
+        "price": 1
+      }
+    ],
+    "order_total": 1.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-06-01T04:47:42",
+    "confirmed_at": "2026-06-01T04:47:53"
+  },
+  {
+    "order_id": 27,
+    "status": "confirmed",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jaytower",
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Masala Chai",
+        "price": 1
+      }
+    ],
+    "order_total": 1.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-06-01T04:38:27",
+    "confirmed_at": "2026-06-01T04:38:51"
+  },
+  {
+    "order_id": 26,
+    "status": "confirmed",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jaytower",
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Masala Chai",
+        "price": 1
+      }
+    ],
+    "order_total": 1.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-06-01T04:26:59",
+    "confirmed_at": "2026-06-01T04:27:35"
+  },
+  {
+    "order_id": 25,
+    "status": "pending",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jaytower",
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Masala Chai",
+        "price": 1
+      }
+    ],
+    "order_total": 1.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-06-01T04:14:58",
+    "confirmed_at": null
+  },
+  {
+    "order_id": 24,
+    "status": "pending",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "ddv",
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Masala Chai",
+        "price": 1
+      }
+    ],
+    "order_total": 1.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-05-30T08:41:03",
+    "confirmed_at": null
+  },
+  {
+    "order_id": 23,
+    "status": "pending",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "ddv",
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Masala Chai",
+        "price": 1
+      }
+    ],
+    "order_total": 1.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-05-30T08:41:03",
+    "confirmed_at": null
+  },
+  {
+    "order_id": 22,
+    "status": "pending",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "ddv",
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Masala Chai",
+        "price": 1
+      }
+    ],
+    "order_total": 1.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-05-30T08:41:03",
+    "confirmed_at": null
+  },
+  {
+    "order_id": 21,
+    "status": "pending",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "asd",
+      "payment_method": "Online Payment"
+    },
+    "cart_items": [
+      {
+        "name": "Masala Dosa",
+        "price": 159
+      }
+    ],
+    "order_total": 159.0,
+    "payment_method": "Online Payment",
+    "created_at": "2026-05-30T07:32:47",
+    "confirmed_at": null
+  },
+  {
+    "order_id": 20,
+    "status": "pending",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jzrw",
+      "payment_method": "Online Payment"
+    },
+    "cart_items": [
+      {
+        "name": "Masala Dosa",
+        "price": 159
+      }
+    ],
+    "order_total": 159.0,
+    "payment_method": "Online Payment",
+    "created_at": "2026-05-30T07:28:40",
+    "confirmed_at": null
+  },
+  {
+    "order_id": 19,
+    "status": "pending",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jaytower",
+      "payment_method": "Online Payment"
+    },
+    "cart_items": [
+      {
+        "name": "Masala Dosa",
+        "price": 159
+      }
+    ],
+    "order_total": 159.0,
+    "payment_method": "Online Payment",
+    "created_at": "2026-05-30T07:24:30",
+    "confirmed_at": null
+  },
+  {
+    "order_id": 18,
+    "status": "pending",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jaytower",
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Masala Dosa",
+        "price": 159
+      }
+    ],
+    "order_total": 159.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-05-30T07:24:13",
+    "confirmed_at": null
+  },
+  {
+    "order_id": 17,
+    "status": "pending",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jaytower",
+      "payment_method": "Online Payment"
+    },
+    "cart_items": [
+      {
+        "name": "Masala Dosa",
+        "price": 159
+      }
+    ],
+    "order_total": 159.0,
+    "payment_method": "Online Payment",
+    "created_at": "2026-05-30T07:21:01",
+    "confirmed_at": null
+  },
+  {
+    "order_id": 16,
+    "status": "pending",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jgcfgxf",
+      "payment_method": "Online Payment"
+    },
+    "cart_items": [
+      {
+        "name": "Paneer Butter Masala",
+        "price": 279
+      }
+    ],
+    "order_total": 279.0,
+    "payment_method": "Online Payment",
+    "created_at": "2026-05-29T10:27:01",
+    "confirmed_at": null
+  },
+  {
+    "order_id": 15,
+    "status": "pending",
+    "order_status": "Paid",
+    "checkout_details": {
+      "address": "jjaytower",
+      "email": "amolkdm9890@gmail.com",
+      "full_name": "Amol Kadam",
+      "payment_method": "Online Payment",
+      "phone": "7822065495"
+    },
+    "cart_items": [
+      {
+        "name": "Paneer Butter Masala",
+        "price": 279
+      }
+    ],
+    "order_total": 279.0,
+    "payment_method": "Online Payment",
+    "created_at": "2026-05-29T10:24:35",
+    "confirmed_at": null,
+    "paid_at": "2026-05-29T10:24:45"
+  },
+  {
+    "order_id": 14,
+    "status": "pending",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jjaytower",
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Paneer Butter Masala",
+        "price": 279
+      }
+    ],
+    "order_total": 279.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-05-29T10:24:15",
+    "confirmed_at": null
+  },
+  {
+    "order_id": 13,
+    "status": "pending",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "amol",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jaytower",
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Paneer Butter Masala",
+        "price": 279
+      },
+      {
+        "name": "Paneer Butter Masala",
+        "price": 279
+      }
+    ],
+    "order_total": 558.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-05-29T10:23:23",
+    "confirmed_at": null
+  },
+  {
+    "order_id": 12,
+    "status": "confirmed",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "amol",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jaytower",
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Paneer Butter Masala",
+        "price": 279
+      },
+      {
+        "name": "Paneer Butter Masala",
+        "price": 279
+      }
+    ],
+    "order_total": 558.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-05-29T10:18:21",
+    "confirmed_at": "2026-05-29T10:18:38"
+  },
+  {
+    "order_id": 11,
+    "status": "confirmed",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "amol",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jaytower",
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Paneer Butter Masala",
+        "price": 279
+      },
+      {
+        "name": "Paneer Butter Masala",
+        "price": 279
+      }
+    ],
+    "order_total": 558.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-05-29T10:15:15",
+    "confirmed_at": "2026-05-29T10:18:40"
+  },
+  {
+    "order_id": 10,
+    "status": "confirmed",
+    "order_status": "Pending Confirmation",
+    "checkout_details": {
+      "full_name": "Amol Kadam",
+      "email": "amolkdm9890@gmail.com",
+      "phone": "7822065495",
+      "address": "jaytower",
+      "payment_method": "Cash on Delivery"
+    },
+    "cart_items": [
+      {
+        "name": "Paneer Butter Masala",
+        "price": 279
+      }
+    ],
+    "order_total": 279.0,
+    "payment_method": "Cash on Delivery",
+    "created_at": "2026-05-29T10:11:17",
+    "confirmed_at": "2026-05-29T10:11:52"
+  }
+]
